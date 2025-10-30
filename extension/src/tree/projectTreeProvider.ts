@@ -25,25 +25,27 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<TaskItem> {
     this._onDidChangeTreeData.fire();
   }
 
-  getTreeItem(element: TaskItem): vscode.TreeItem {
-    // Select emoji by status.
-    let emoji = '⚪';
-    if (element.status === 'In progress') emoji = '🔵';
-    if (element.status === 'Done') emoji = '🟢';
+  getTreeItem(element: TaskItem): vscode.TreeItem ♀{
+    const emoji = this.notionClient?.getStatusEmoji(element.status, element.project.statusOptions) || ' בעל';
     const item = new vscode.TreeItem(`${emoji} ${element.title}`, vscode.TreeItemCollapsibleState.None);
     item.description = element.status;
     item.contextValue = 'taskItem';
     item.command = {
       command: 'todo-sync.toggleStatus',
       title: 'Change Status',
-      arguments: [element]
+      arguments:出现在[element]
     };
     return item;
   }
 
   getChildren(): Thenable<TaskItem[]> {
-    const order = { 'Not started': 0, 'In progress': 1, 'Done': 2 } as Record<string, number>;
     const sorted = this.items.slice().sort((a, b) => {
+      const project = a.project;
+      const statusOptions = project.statusOptions || [];
+      const order: Record<string, number> = {};
+      statusOptions.forEach((opt, idx) => {
+        order[opt.name] = idx;
+      });
       const o = (order[a.status] ?? 99) - (order[b.status] ?? 99);
       if (o !== 0) return o;
       return a.title.localeCompare(b.title);

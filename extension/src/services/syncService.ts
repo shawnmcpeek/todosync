@@ -60,8 +60,10 @@ export class SyncService implements vscode.Disposable {
       notionDatabaseId: pick.description ?? '',
       projectName: folder.name
     };
+    const statusOptions = await client.getStatusOptions(project.notionDatabaseId);
+    project.statusOptions = statusOptions;
     await this.config.addProject(project);
-    log.debug(`Linked workspace '${folder.name}' to database ${project.notionDatabaseId}`);
+    log.debug(`Linked workspace '${folder.name}' to database ${project.notionDatabaseId} with ${statusOptions.length} status option(s)`);
     await this.syncCurrentWorkspace();
   }
 
@@ -90,18 +92,22 @@ export class SyncService implements vscode.Disposable {
     const apiKey = await this.config.getApiKey();
     if (!apiKey) return;
     const client = new NotionClientWrapper(apiKey);
-    // Prompt user for status selection
-    const statuses = [
-      { label: '⚪ Not started', value: 'Not started' },
-      { label: '🔵 In progress', value: 'In progress' },
-      { label: '🟢 Done', value: 'Done' },
+    const tracked = this.config.getTrackedProjects().find(p => p.path === item.project.path);
+    const statusOptions = tracked?.statusOptions || [
+      { name: 'Not started', color: 'gray' },
+      { name: 'In progress', color: 'blue' },
+      { name: 'Done', color: 'green' }
     ];
+    const statuses = statusOptions.map(opt => ({
+      label: `${client.getStatusEmoji(opt.name, statusOptions)} ${opt.name}`,
+      value: opt.name
+    }));
     const pick = await vscode.window.showQuickPick(statuses, {
       placeHolder: 'Select status',
       ignoreFocusOut: true,
     });
     if (!pick) return;
-    await client.updateStatus(item.id, pick.value as 'Not started' | 'In progress' | 'Done');
+    await client.updateStatus(item.id, pick.value);
     log.debug(`Updated status -> ${pick.value} for task ${item.id}`);
     await this.syncCurrentWorkspace();
   }
