@@ -42,6 +42,9 @@ class ProjectTreeProvider {
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
         this.items = [];
     }
+    setNotionClient(client) {
+        this.notionClient = client;
+    }
     setItems(items) {
         this.items = items.slice();
         this._onDidChangeTreeData.fire();
@@ -50,12 +53,7 @@ class ProjectTreeProvider {
         this._onDidChangeTreeData.fire();
     }
     getTreeItem(element) {
-        // Select emoji by status.
-        let emoji = '⚪';
-        if (element.status === 'In progress')
-            emoji = '🔵';
-        if (element.status === 'Done')
-            emoji = '🟢';
+        const emoji = this.notionClient?.getStatusEmoji(element.status, element.project.statusOptions) || '⚪';
         const item = new vscode.TreeItem(`${emoji} ${element.title}`, vscode.TreeItemCollapsibleState.None);
         item.description = element.status;
         item.contextValue = 'taskItem';
@@ -67,8 +65,13 @@ class ProjectTreeProvider {
         return item;
     }
     getChildren() {
-        const order = { 'Not started': 0, 'In progress': 1, 'Done': 2 };
         const sorted = this.items.slice().sort((a, b) => {
+            const project = a.project;
+            const statusOptions = project.statusOptions || [];
+            const order = {};
+            statusOptions.forEach((opt, idx) => {
+                order[opt.name] = idx;
+            });
             const o = (order[a.status] ?? 99) - (order[b.status] ?? 99);
             if (o !== 0)
                 return o;

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ConfigService, TrackedProject } from '../services/configService';
+import { NotionClientWrapper } from '../notion/notionClient';
 
 export type TaskItem = {
   id: string;
@@ -13,8 +14,13 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<TaskItem> {
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
   private items: TaskItem[] = [];
+  private notionClient: NotionClientWrapper | undefined;
 
   constructor(private readonly configService: ConfigService) {}
+
+  setNotionClient(client: NotionClientWrapper) {
+    this.notionClient = client;
+  }
 
   setItems(items: TaskItem[]) {
     this.items = items.slice();
@@ -25,15 +31,15 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<TaskItem> {
     this._onDidChangeTreeData.fire();
   }
 
-  getTreeItem(element: TaskItem): vscode.TreeItem ♀{
-    const emoji = this.notionClient?.getStatusEmoji(element.status, element.project.statusOptions) || ' בעל';
+  getTreeItem(element: TaskItem): vscode.TreeItem {
+    const emoji = this.notionClient?.getStatusEmoji(element.status, element.project.statusOptions) || '⚪';
     const item = new vscode.TreeItem(`${emoji} ${element.title}`, vscode.TreeItemCollapsibleState.None);
     item.description = element.status;
     item.contextValue = 'taskItem';
     item.command = {
       command: 'todo-sync.toggleStatus',
       title: 'Change Status',
-      arguments:出现在[element]
+      arguments: [element]
     };
     return item;
   }
@@ -53,5 +59,3 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<TaskItem> {
     return Promise.resolve(sorted);
   }
 }
-
-

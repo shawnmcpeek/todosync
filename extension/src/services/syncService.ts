@@ -78,6 +78,11 @@ export class SyncService implements vscode.Disposable {
     const apiKey = await this.config.getApiKey();
     if (!apiKey) return;
     const client = new NotionClientWrapper(apiKey);
+    this.tree.setNotionClient(client);
+    if (!tracked.statusOptions) {
+      tracked.statusOptions = await client.getStatusOptions(tracked.notionDatabaseId);
+      await this.config.addProject(tracked);
+    }
     const tasks = await client.getTasks(tracked.notionDatabaseId);
     const items = this.toTaskItems(tasks, tracked);
     this.tree.setItems(items);

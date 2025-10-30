@@ -2,6 +2,21 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotionClientWrapper = void 0;
 const client_1 = require("@notionhq/client");
+const NOTION_COLOR_TO_EMOJI = {
+    default: '⚪',
+    gray: '⚪',
+    brown: '🟤',
+    orange: '🟠',
+    yellow: '🟡',
+    green: '🟢',
+    blue: '🔵',
+    purple: '🟣',
+    pink: '🩷',
+    red: '🔴',
+};
+function notionColorToEmoji(color) {
+    return NOTION_COLOR_TO_EMOJI[color.toLowerCase()] || NOTION_COLOR_TO_EMOJI.default;
+}
 class NotionClientWrapper {
     constructor(apiKey) {
         this.client = new client_1.Client({ auth: apiKey });
@@ -42,6 +57,35 @@ class NotionClientWrapper {
                 cursor = undefined;
         } while (cursor);
         return tasks;
+    }
+    async getStatusOptions(databaseId) {
+        const db = await this.client.databases.retrieve({ database_id: databaseId });
+        const statusProp = db.properties?.Status;
+        if (!statusProp || statusProp.type !== 'status') {
+            return [
+                { name: 'Not started', color: 'gray' },
+                { name: 'In progress', color: 'blue' },
+                { name: 'Done', color: 'green' }
+            ];
+        }
+        return (statusProp.status?.options || []).map((opt) => ({
+            name: opt.name,
+            color: opt.color || 'default'
+        }));
+    }
+    getStatusEmoji(statusName, statusOptions) {
+        if (statusOptions) {
+            const option = statusOptions.find(opt => opt.name === statusName);
+            if (option) {
+                return notionColorToEmoji(option.color);
+            }
+        }
+        const fallback = {
+            'Not started': '⚪',
+            'In progress': '🔵',
+            'Done': '🟢'
+        };
+        return fallback[statusName] || '⚪';
     }
     async updateStatus(pageId, status) {
         await this.client.pages.update({

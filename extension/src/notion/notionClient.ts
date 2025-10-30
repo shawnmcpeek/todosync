@@ -7,6 +7,28 @@ export type NotionTask = {
   lastEditedTime?: string;
 };
 
+export type StatusOption = {
+  name: string;
+  color: string;
+};
+
+const NOTION_COLOR_TO_EMOJI: Record<string, string> = {
+  default: '⚪',
+  gray: '⚪',
+  brown: '🟤',
+  orange: '🟠',
+  yellow: '🟡',
+  green: '🟢',
+  blue: '🔵',
+  purple: '🟣',
+  pink: '🩷',
+  red: '🔴',
+};
+
+function notionColorToEmoji(color: string): string {
+  return NOTION_COLOR_TO_EMOJI[color.toLowerCase()] || NOTION_COLOR_TO_EMOJI.default;
+}
+
 export class NotionClientWrapper {
   private client: Client;
 

@@ -86,8 +86,10 @@ class SyncService {
             notionDatabaseId: pick.description ?? '',
             projectName: folder.name
         };
+        const statusOptions = await client.getStatusOptions(project.notionDatabaseId);
+        project.statusOptions = statusOptions;
         await this.config.addProject(project);
-        log_1.log.debug(`Linked workspace '${folder.name}' to database ${project.notionDatabaseId}`);
+        log_1.log.debug(`Linked workspace '${folder.name}' to database ${project.notionDatabaseId} with ${statusOptions.length} status option(s)`);
         await this.syncCurrentWorkspace();
     }
     async syncCurrentWorkspace() {
@@ -103,6 +105,11 @@ class SyncService {
         if (!apiKey)
             return;
         const client = new notionClient_1.NotionClientWrapper(apiKey);
+        this.tree.setNotionClient(client);
+        if (!tracked.statusOptions) {
+            tracked.statusOptions = await client.getStatusOptions(tracked.notionDatabaseId);
+            await this.config.addProject(tracked);
+        }
         const tasks = await client.getTasks(tracked.notionDatabaseId);
         const items = this.toTaskItems(tasks, tracked);
         this.tree.setItems(items);
@@ -116,12 +123,16 @@ class SyncService {
         if (!apiKey)
             return;
         const client = new notionClient_1.NotionClientWrapper(apiKey);
-        // Prompt user for status selection
-        const statuses = [
-            { label: '⚪ Not started', value: 'Not started' },
-            { label: '🔵 In progress', value: 'In progress' },
-            { label: '🟢 Done', value: 'Done' },
+        const tracked = this.config.getTrackedProjects().find(p => p.path === item.project.path);
+        const statusOptions = tracked?.statusOptions || [
+            { name: 'Not started', color: 'gray' },
+            { name: 'In progress', color: 'blue' },
+            { name: 'Done', color: 'green' }
         ];
+        const statuses = statusOptions.map(opt => ({
+            label: `${client.getStatusEmoji(opt.name, statusOptions)} ${opt.name}`,
+            value: opt.name
+        }));
         const pick = await vscode.window.showQuickPick(statuses, {
             placeHolder: 'Select status',
             ignoreFocusOut: true,
