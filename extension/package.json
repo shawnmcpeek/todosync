@@ -1,0 +1,92 @@
+{
+  "name": "todo-sync",
+  "displayName": "ToDoSync",
+  "description": "Sync VS Code workspace tasks with Notion projects (Status only)",
+  "version": "0.0.1",
+  "publisher": "local",
+  "repository": {
+    "type": "git",
+    "url": "https://example.com/todo-sync.git"
+  },
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:todo-sync-projects",
+    "onCommand:todo-sync.linkProject",
+    "onCommand:todo-sync.syncNow",
+    "onCommand:todo-sync.syncAll",
+    "onCommand:todo-sync.setApiKey"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "todo-sync.linkProject",
+        "title": "ToDoSync: Link Project"
+      },
+      {
+        "command": "todo-sync.syncNow",
+        "title": "ToDoSync: Sync Now"
+      },
+      {
+        "command": "todo-sync.syncAll",
+        "title": "ToDoSync: Sync All"
+      },
+      {
+        "command": "todo-sync.setApiKey",
+        "title": "ToDoSync: Set Notion API Key"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "todo-sync-projects",
+          "name": "ToDoSync"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "ToDoSync",
+      "properties": {
+        "todoSync.trackedProjects": {
+          "type": "array",
+          "default": [],
+          "scope": "window",
+          "description": "Workspace-scoped links of VS Code folders to Notion database IDs"
+        },
+        "todoSync.enableDebug": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Enable debug logging to Output channel"
+        },
+        "todoSync.refreshIntervalMinutes": {
+          "type": "number",
+          "default": 5,
+          "scope": "window",
+          "description": "Auto-refresh interval in minutes"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/vscode": "^1.84.0",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2"
+  }
+}
+
+

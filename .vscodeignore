@@ -1,0 +1,8 @@
+src/**
+tsconfig.json
+test-*.js
+test-*.md
+devplan.md
+.env
+node_modules/**
+.gitignore
