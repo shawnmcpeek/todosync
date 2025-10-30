@@ -95,26 +95,93 @@ export class SyncService implements vscode.Disposable {
 
   async toggleStatus(item: TaskItem): Promise<void> {
     const apiKey = await this.config.getApiKey();
-    if (!apiKey) return;
+    if (!apiKey) {
+      vscode.window.showWarningMessage('ToDoSync: No API key found. Set it first.');
+      return;
+    }
     const client = new NotionClientWrapper(apiKey);
     const tracked = this.config.getTrackedProjects().find(p => p.path === item.project.path);
-    const statusOptions = tracked?.statusOptions || [
-      { name: 'Not started', color: 'gray' },
-      { name: 'In progress', color: 'blue' },
-      { name: 'Done', color: 'green' }
-    ];
+    
+    // Ensure statusOptions are loaded
+    let statusOptions = tracked?.statusOptions;
+    if (!statusOptions || statusOptions.length === 0) {
+      if (tracked) {
+        statusOptions = await client.getStatusOptions(tracked.notionDatabaseId);
+        tracked.statusOptions = statusOptions;
+        await this.config.addProject(tracked);
+      } else {
+        statusOptions = [
+          { name: 'Not started', color: 'gray' },
+          { name: 'In progress', color: 'blue' },
+          { name: 'Done', color: 'green' }
+        ];
+      }
+    }
+    
     const statuses = statusOptions.map(opt => ({
       label: `${client.getStatusEmoji(opt.name, statusOptions)} ${opt.name}`,
-      value: opt.name
+      value: opt.name,
+      description: opt.name === item.status ? 'Current status' : undefined
     }));
+    
     const pick = await vscode.window.showQuickPick(statuses, {
-      placeHolder: 'Select status',
+      placeHolder: `Change status for "${item.title}"`,
       ignoreFocusOut: true,
+      canPickMany: false,
     });
-    if (!pick) return;
+    
+    if (!pick || pick.value === item.status) return;
+    
     await client.updateStatus(item.id, pick.value);
     log.debug(`Updated status -> ${pick.value} for task ${item.id}`);
     await this.syncCurrentWorkspace();
+  }
+
+  async addTask(): Promise<void> {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+      vscode.window.showErrorMessage('ToDoSync: No workspace folder found.');
+      return;
+    }
+    
+    const tracked = this.config.getTrackedProjects().find(p => p.path === folder.uri.fsPath);
+    if (!tracked) {
+      vscode.window.showWarningMessage('ToDoSync: Link this workspace to a Notion database first.', 'Link Project')
+        .then(sel => sel && vscode.commands.executeCommand('todo-sync.linkProject'));
+      return;
+    }
+    
+    const apiKey = await this.config.getApiKey();
+    if (!apiKey) {
+      vscode.window.showWarningMessage('ToDoSync: Set Notion API key first.', 'Set API Key')
+        .then(sel => sel && vscode.commands.executeCommand('todo-sync.setApiKey'));
+      return;
+    }
+    
+    const title = await vscode.window.showInputBox({
+      prompt: 'Enter task title',
+      placeHolder: 'Add Task',
+      ignoreFocusOut: true,
+    });
+    
+    if (!title || !title.trim()) return;
+    
+    const client = new NotionClientWrapper(apiKey);
+    
+    // Get default status (first status option or "Not started")
+    let defaultStatus = 'Not started';
+    if (tracked.statusOptions && tracked.statusOptions.length > 0) {
+      defaultStatus = tracked.statusOptions[0].name;
+    }
+    
+    try {
+      await client.createTask(tracked.notionDatabaseId, title.trim(), defaultStatus);
+      vscode.window.showInformationMessage(`ToDoSync: Task "${title.trim()}" added.`);
+      await this.syncCurrentWorkspace();
+    } catch (error: any) {
+      vscode.window.showErrorMessage(`ToDoSync: Failed to add task: ${error.message || error}`);
+      log.debug(`Failed to add task: ${error}`);
+    }
   }
 
   private toTaskItems(tasks: NotionTask[], project: TrackedProject): TaskItem[] {

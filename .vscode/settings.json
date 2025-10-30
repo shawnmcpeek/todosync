@@ -1,4 +1,5 @@
-{    "todoSync.trackedProjects": [
+{
+    "todoSync.trackedProjects": [
         {
             "path": "c:\\Users\\shawn\\Documents\\github\\Scythe & Seek",
             "notionDatabaseId": "29278860-176f-8083-8451-d5fb354072b9",
@@ -7,7 +8,21 @@
         {
             "path": "c:\\Users\\shawn\\Documents\\github\\notion-git-sync",
             "notionDatabaseId": "29278860-176f-80fb-89af-feef219d121f",
-            "projectName": "notion-git-sync"
+            "projectName": "notion-git-sync",
+            "statusOptions": [
+                {
+                    "name": "Not started",
+                    "color": "default"
+                },
+                {
+                    "name": "In progress",
+                    "color": "blue"
+                },
+                {
+                    "name": "Done",
+                    "color": "green"
+                }
+            ]
         }
     ]
 }

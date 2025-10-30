@@ -40,8 +40,32 @@
       {
         "command": "todo-sync.setApiKey",
         "title": "ToDoSync: Set Notion API Key"
+      },
+      {
+        "command": "todo-sync.toggleStatus",
+        "title": "Change Status"
+      },
+      {
+        "command": "todo-sync.addTask",
+        "title": "Add Task"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "todo-sync.addTask",
+          "when": "view == todo-sync-projects",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "todo-sync.toggleStatus",
+          "when": "view == todo-sync-projects && viewItem == taskItem",
+          "group": "inline"
+        }
+      ]
+    },
     "views": {
       "explorer": [
         {
@@ -85,7 +109,8 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@notionhq/client": "^2"
+    "@notionhq/client": "^2",
+    "dotenv": "^16"
   }
 }
 

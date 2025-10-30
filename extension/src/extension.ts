@@ -41,6 +41,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand('todo-sync.toggleStatus', async (item) => {
       await syncService?.toggleStatus(item);
+    }),
+
+    vscode.commands.registerCommand('todo-sync.addTask', async () => {
+      await syncService?.addTask();
     })
   );
 

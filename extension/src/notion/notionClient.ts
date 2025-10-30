@@ -113,6 +113,31 @@ export class NotionClientWrapper {
       } as any
     });
   }
+
+  async createTask(databaseId: string, title: string, defaultStatus?: string): Promise<string> {
+    const db = await this.client.databases.retrieve({ database_id: databaseId });
+    const properties: any = {};
+    
+    // Find title property
+    const titleProp = Object.entries((db as any).properties || {}).find(([_, p]: [string, any]) => p.type === 'title');
+    if (titleProp) {
+      properties[titleProp[0]] = {
+        title: [{ text: { content: title } }]
+      };
+    }
+    
+    // Set status if provided
+    if (defaultStatus && (db as any).properties?.Status) {
+      properties.Status = { status: { name: defaultStatus } };
+    }
+    
+    const page = await this.client.pages.create({
+      parent: { database_id: databaseId },
+      properties
+    });
+    
+    return page.id;
+  }
 }
 
 

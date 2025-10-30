@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export type StatusOption = {
   name: string;
@@ -26,6 +28,27 @@ export class ConfigService {
   }
 
   async getApiKey(): Promise<string | undefined> {
+    // First check .env file in workspace root
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (workspaceFolder) {
+      const envPath = path.join(workspaceFolder.uri.fsPath, '.env');
+      try {
+        if (fs.existsSync(envPath)) {
+          const envContent = fs.readFileSync(envPath, 'utf8');
+          const envLines = envContent.split('\n');
+          for (const line of envLines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('NOTION_API_KEY=')) {
+              const key = trimmed.substring('NOTION_API_KEY='.length).trim().replace(/^["']|["']$/g, '');
+              if (key) return key;
+            }
+          }
+        }
+      } catch (error) {
+        // If .env read fails, fall through to SecretStorage
+      }
+    }
+    // Fall back to SecretStorage
     return await this.context.secrets.get(SECRET_KEY);
   }
 
