@@ -8,6 +8,7 @@
     "type": "git",
     "url": "https://example.com/todo-sync.git"
   },
+  "icon": "todosync.png",
   "engines": {
     "vscode": "^1.84.0"
   },
@@ -15,12 +16,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onView:todo-sync-projects",
-    "onCommand:todo-sync.linkProject",
-    "onCommand:todo-sync.syncNow",
-    "onCommand:todo-sync.syncAll",
-    "onCommand:todo-sync.setApiKey"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -70,7 +66,8 @@
       "explorer": [
         {
           "id": "todo-sync-projects",
-          "name": "ToDoSync"
+          "name": "ToDoSync",
+          "icon": "todosync.png"
         }
       ]
     },
